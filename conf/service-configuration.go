@@ -40,13 +40,15 @@ type Database struct {
 	Port                   int    `json:"port" validate:"omitempty,min=5"`
 	Username               string `json:"username" validate:"omitempty,min=5"`
 	PasswordFilepath       string `json:"password_filepath" validate:"omitempty,min=5"`
-	password               string
-	sslCertificate         string
 	SSLCertificateFilepath string `json:"ssl_certificate_filepath" validate:"omitempty,required_if=UseSSL true"`
 	UseSSL                 bool   `json:"use_ssl" validate:"required"`
 	Debug                  bool   `json:"debug" validate:"required"`
 	Automigrate            bool   `json:"automigrate" validate:"required"`
 	DatabaseName           string `json:"database_name" validate:"omitempty"`
+
+	password       string
+	sslCertificate string
+	address        string
 }
 
 //
@@ -64,6 +66,10 @@ func (d Database) GetPassword() string {
 
 func (d Database) GetSSLCertificate() string {
 	return d.sslCertificate
+}
+
+func (d Database) GetAddress() string {
+	return d.address
 }
 
 func LoadServiceConfiguration(configFilePath string) (*ServiceConfiguration, error) {
