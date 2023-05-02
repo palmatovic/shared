@@ -2,16 +2,13 @@ package database
 
 import (
 	"crypto/tls"
-	"crypto/x509"
-	"fmt"
 	"github.com/antihax/optional"
 	"github.com/go-sql-driver/mysql"
-	"os"
+	"github.com/palmatovic/shared/conf"
 	"time"
 
 	sql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"shared/conf"
 )
 
 // GetDB open new connection pool.
@@ -23,9 +20,13 @@ func GetDB(databaseConfig *conf.Database, dbTables ...interface{}) (db *gorm.DB,
 	} else {
 		typeTLS = optional.EmptyString().Value()
 	}
+	pwd, err := databaseConfig.GetPassword()
+	if err != nil {
+		return nil, err
+	}
 	configDB := mysql.Config{
 		User:                 databaseConfig.Username,
-		Passwd:               databaseConfig.GetPassword(),
+		Passwd:               pwd,
 		Addr:                 databaseConfig.GetAddress(),
 		Net:                  "tcp",
 		DBName:               databaseConfig.DatabaseName,
@@ -38,17 +39,8 @@ func GetDB(databaseConfig *conf.Database, dbTables ...interface{}) (db *gorm.DB,
 	connectionString := configDB.FormatDSN()
 
 	if databaseConfig.UseSSL {
-		fileCA := databaseConfig.SSLCertificateFilepath
-		rootCertPool := x509.NewCertPool()
-		CA, err := os.ReadFile(fileCA)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read ca-certfile")
-		}
-		if validCA := rootCertPool.AppendCertsFromPEM(CA); !validCA {
-			return nil, fmt.Errorf("failed to append ca from ca-cert")
-		}
 		err = mysql.RegisterTLSConfig(typeTLS, &tls.Config{
-			RootCAs:    rootCertPool,
+			RootCAs:    databaseConfig.GetSSLCertificate(),
 			MinVersion: tls.VersionTLS12,
 		})
 		if err != nil {

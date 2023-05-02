@@ -1,10 +1,11 @@
 package conf
 
 import (
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-playground/validator/v10"
+	"github.com/palmatovic/shared/util"
 	"os"
 	"path/filepath"
 )
@@ -32,23 +33,20 @@ type Elastic struct {
 	Password       string `json:"password" validate:"omitempty,min=5"`
 	SSLCertificate string `json:"ssl_certificate" validate:"omitempty,required_if=UseSSL true"`
 	UseSSL         string `json:"use_ssl" validate:"omitempty,min=5"`
-	Client         elasticsearch.Client
 }
 
 type Database struct {
-	Host                   string `json:"host" validate:"omitempty,min=5"`
-	Port                   int    `json:"port" validate:"omitempty,min=5"`
-	Username               string `json:"username" validate:"omitempty,min=5"`
-	PasswordFilepath       string `json:"password_filepath" validate:"omitempty,min=5"`
-	SSLCertificateFilepath string `json:"ssl_certificate_filepath" validate:"omitempty,required_if=UseSSL true"`
-	UseSSL                 bool   `json:"use_ssl" validate:"required"`
-	Debug                  bool   `json:"debug" validate:"required"`
-	Automigrate            bool   `json:"automigrate" validate:"required"`
-	DatabaseName           string `json:"database_name" validate:"omitempty"`
-
-	password       string
-	sslCertificate string
-	address        string
+	Host                          string `json:"host" validate:"omitempty,min=5"`
+	Port                          int    `json:"port" validate:"omitempty,min=5"`
+	Username                      string `json:"username" validate:"omitempty,min=5"`
+	PasswordFilepath              string `json:"password_filepath" validate:"omitempty,min=5"`
+	SSLCertificateFilepath        string `json:"ssl_certificate_filepath" validate:"omitempty,required_if=UseSSL true"`
+	UseSSL                        bool   `json:"use_ssl" validate:"required"`
+	Debug                         bool   `json:"debug" validate:"required"`
+	Automigrate                   bool   `json:"automigrate" validate:"required"`
+	DatabaseName                  string `json:"database_name" validate:"omitempty"`
+	UseEncryptedPassword          bool   `json:"use_encrypted_password" validate:"required"`
+	PasswordEncryptionKeyFilepath string `json:"password_encryption_key_filepath" validate:"required_if=UseEncryptedPassword true"`
 }
 
 //
@@ -60,16 +58,37 @@ type Database struct {
 //
 //}
 
-func (d Database) GetPassword() string {
-	return d.password
+func (d Database) GetPassword() (string, error) {
+	if d.UseEncryptedPassword {
+		pwdEncryptBytes, err := os.ReadFile(d.PasswordEncryptionKeyFilepath)
+		if err != nil {
+			return "", err
+		}
+		return util.ReadEncryptedPasswordFromFile(d.PasswordFilepath, pwdEncryptBytes)
+	}
+	pwdBytes, err := os.ReadFile(d.PasswordFilepath)
+	if err != nil {
+		return "", err
+	}
+	return string(pwdBytes), nil
+
 }
 
-func (d Database) GetSSLCertificate() string {
-	return d.sslCertificate
+func (d Database) GetSSLCertificate() (*x509.CertPool, error) {
+	fileCA := d.SSLCertificateFilepath
+	rootCertPool := x509.NewCertPool()
+	CA, err := os.ReadFile(fileCA)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read ca-certfile")
+	}
+	if validCA := rootCertPool.AppendCertsFromPEM(CA); !validCA {
+		return nil, fmt.Errorf("failed to append ca from ca-cert")
+	}
+	return rootCertPool, nil
 }
 
 func (d Database) GetAddress() string {
-	return d.address
+	return fmt.Sprintf("%s:%d", d.Host, d.Port)
 }
 
 func LoadServiceConfiguration(configFilePath string) (*ServiceConfiguration, error) {

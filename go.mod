@@ -1,4 +1,4 @@
-module shared
+module github.com/palmatovic/shared
 
 go 1.20
 
