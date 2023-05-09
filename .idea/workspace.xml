@@ -5,10 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="83ddb605-ab9f-4d4b-b507-a61d28cbb105" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/util/read.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/conf/service-configuration.go" beforeDir="false" afterPath="$PROJECT_DIR$/conf/service-configuration.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mariadb/util-db.go" beforeDir="false" afterPath="$PROJECT_DIR$/mariadb/util-db.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -79,8 +77,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/conf/service-configuration.go</url>
-          <line>65</line>
-          <option name="timeStamp" value="1" />
+          <line>40</line>
+          <option name="timeStamp" value="4" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
